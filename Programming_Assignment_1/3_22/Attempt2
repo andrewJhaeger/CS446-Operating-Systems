@@ -1,0 +1,86 @@
+// WILL FINISH LATER
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <string.h>
+
+
+int main()
+{
+  const char *name = "HW1";
+  const int SIZE = 4096;
+  int USINGTHISNUM = 88; // PLACEHOLDER UNTIL I FIGURE OUT HOW TO GET INPUT IN C
+//  char output[1024];
+  pid_t pid; // Holds process id when forked
+  
+  int shm_fd; // for shared memory segment
+  void *ptr; // address of mapped object
+  
+  pid = fork();
+  
+  
+  printf("Welcome to the CS446 program.\n");
+  printf("Please enter a non-negative number and press enter.");
+  scanf("%d", &USINGTHISNUM); // gets number
+  
+
+  if (pid < 0) // error
+  {
+  fprintf(stderr, "Failed fork\n"); // failed fork
+    return 1;
+  }
+  else if (pid == 0) // child
+  {
+    shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666); // MIGHT NEED TO BE 0777. I honestly don't know.
+	ftruncate(shm_fd,SIZE); // sets size of shared block.
+	ptr = mmap(NULL, SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0); // sets memory map
+	// MORE SPECIFICALLY, NULL tells kernel to set automatic place,
+	// Size is size, PROT_READ | PROT_WRITE is protection levels,
+	// MAP_SHARED is shared memory block. shm_fd is shared memory location.
+	// 0 is an offset (not using)
+	
+	char outNum[24];
+	char newLineArray[1]; // roundabout way of doing things
+	newLineArray[0] = '\n'
+    while (USINGTHISNUM != 1)
+    {
+      if (USINGTHISNUM % 2 == 0)
+      {
+        USINGTHISNUM /= 2;
+		itoa(USINGTHISNUM, outNum, 10); // VALUE, temp char array, base 10
+		strcat(outNum, newLineArray);
+		sprintf(ptr, "%s", outNum);
+      }
+      else
+      {
+        USINGTHISNUM = (USINGTHISNUM * 3) + 1;
+		itoa(USINGTHISNUM, outNum, 10); // VALUE, temp char array, base 10
+		strcat(outNum, outNewLineArray);
+		sprintf(ptr, "%s", outNum);
+      }
+    } // end while
+  } // end elseif (Child block)
+  else // PARENT
+  {
+     wait(); // NEED WAIT HERE?
+	  shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666); // MIGHT NEED TO BE 0777. I honestly don't know.
+      if (shm_fd == -1)
+	  {
+	    printf("Could not open shared memory.\n");
+		exit(-1);
+	  }
+	  ptr = mmap(NULL, SIZE, PROT_READ, MAP_SHARED, shm_fd, 0); // sets memory map
+	  printf("%s", ptr);
+	  printf("%s", "\n END OF PROGRAM");
+  }
+  
+  return 0;
+}
+
+
